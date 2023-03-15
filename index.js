@@ -6,56 +6,145 @@ const port = process.env.PORT || 3000;
 const bodyParser = require('body-parser');
 app.use(bodyParser.json());
 
-var id = 0;
 var data={};
-
+var id=0;
 
 app.use(express.static('html'));
 
-
+	
 app.post("/annotation", function(req, res){
 	var body = req.body;
-	console.log(body);
-	data[id] = body;
-	id++;
+	// console.log(body);
+	data[id]=body;
+	// data.push(body);
 	console.log(data);
+	id++;
 	res.send();
 });
 
-app.get("/recup_annotations", function(req, res){
-		res.send(data);
+
+app.get("/RecupAnnotUniq", function(req, res){
+    var IdAnnot = req.query.Annot;
+
+    var Exist=false;
+
+    var ListFound = [];
+
+    for (key in data){
+        if (key==IdAnnot){
+            Exist = true;
+            ListFound.push(data[key]);
+        }
+    }
+
+    var ChoixFormat=req.query.FormatIdAnnot;
+
+
+    if (ChoixFormat=="html"){
+        req.headers['accept']= 'text/html';
+    }
+    else {
+        if (ChoixFormat=="Json"){
+            req.headers['accept']=  'application/json';
+        }
+    }
+
+
+    res.format ({
+           'text/html': function() {
+                if (Exist){
+                   res.send(ListFound); 
+				   console.log("Document HTML");
+
+                }
+                else {
+                   res.send("aucune annotation n'est associée à cette clé");
+                }
+           },
+
+           'application/json': function() {
+                if (Exist){
+                   res.send(ListFound); 
+				   console.log("Document JSON");
+                }
+                else {
+                   res.send("aucune annotation n'est associée à cette clé");
+                }
+            }
+    });
+
 });
 
-app.get("/recup_annotations_uri", function(req, res){
-	var uri = req.query.uri;
-	console.log(uri);
-	tab_annot = [];
-	for (idx in data){
-		if (data[idx]["URI"] == uri){
-			tab_annot.push(data[idx]["Commentaire"]);
-		}
-	}
-	console.log(tab_annot);
-	res.send(tab_annot);
-});
 
-app.get("/recup_annotation_uri_id", function(req, res){
-	var uri = req.query.uri;
-	var id = req.query.id;
-	console.log(uri);
-	console.log(id);
-	tab_annot = [];
-	for (idx in data){
-		if (data[idx]["URI"] == uri && idx == id){
-			console.log(data[id]);
-			res.send(data[id]);
 
-		}
-	}
-	res.send("Aucun élément correspondant");
 
-});
+app.get("/AllAnnot", function(req, res){
+	var ChoixFormat=req.query.FormatAllAnnot;
 	
+	
+	if (ChoixFormat=="html"){
+		req.headers['accept']= 'text/html';
+	}
+	else {
+		if (ChoixFormat=="Json"){
+			req.headers['accept']=  'application/json';
+		}	
+	}
+		
+	res.format ({
+		   'text/html': function() {
+				console.log("Document HTML");
+				res.send(data); 
+		   },
+
+		   'application/json': function() {
+				console.log("Document JSON");
+				res.send(data);
+			}
+	});
+	
+});
+
+
+app.get("/AnnotURI", function(req, res){
+	var IdURI = req.query.AnnotURI;
+	
+	var ChoixFormat=req.query.FormatAnnotURI;
+	
+	var tabRep=[]
+	
+	for (key in data){
+		if (data[key]["URI"]==IdURI){
+			tabRep.push({"Clé" : key, "Commentaire" : data[key]["Commentaire"]});
+		}
+	}
+	
+	if (ChoixFormat=="html"){
+		req.headers['accept']= 'text/html';
+	}
+	else {
+		if (ChoixFormat=="Json"){
+			req.headers['accept']=  'application/json';
+		}	
+	}
+		
+	res.format ({
+		   'text/html': function() {
+			  res.send(tabRep); 
+			  console.log("Document HTML");
+		   },
+
+		   'application/json': function() {
+			  res.send(tabRep);
+			  console.log("Document JSON");
+			}
+	});
+	
+});
+
+
+
+
 
 app.listen(port, function(){
 	console.log('serveur listening on port : '+port);
